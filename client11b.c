@@ -29,6 +29,9 @@ int main(int argc, char **argv) // user specifies server ip address in command l
     char sendline[MAXLINE], recvline[MAXLINE];
     uint32_t seq = 1;
     struct timespec ts;
+    struct timespec timeout;
+    timeout.tv_sec = 10;
+    timeout.tv_nsec = 0;
     typedef struct packet_lab11
     {
         uint16_t len;
@@ -52,6 +55,12 @@ int main(int argc, char **argv) // user specifies server ip address in command l
     {
         perror("Problem in creating the socket");
         exit(2);
+    }
+
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0)
+    {
+        perror("Problem in setting receive timeout");
+        exit(3);
     }
 
     servlen = sizeof(servaddr);
@@ -80,11 +89,15 @@ int main(int argc, char **argv) // user specifies server ip address in command l
         if (sendto(sockfd, &pkt_s, messagelen + 16, 0, (struct sockaddr *) &servaddr, servlen) < 0)
         {
             perror("Problem in sending to the server");
-            exit(3);
+            exit(4);
         }
 
         memset(&pkt_r, 0, MAXSIZE);
         int numBytes = recvfrom(sockfd, &pkt_r, messagelen + 16, 0, (struct sockaddr *) &servaddr, &servlen);
+        if(numBytes < 0)
+        {
+            printf("server timedout?\n");
+        }
 
         clock_gettime(CLOCK_REALTIME, &ts);
         uint64_t timeTaken = (ts.tv_sec * 1000 + ts.tv_nsec / 1000000) - ntohll(pkt_r.timestamp);

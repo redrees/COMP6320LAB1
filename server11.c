@@ -67,7 +67,6 @@ int main(int argc, char **argv)
             perror("recvfrom error");
             exit(3);
         }
-		sleep(3);
 
         //just in case client didn't send a null byte
 		pkt.message[numBytes-(MAXSIZE-MAXLINE)] = '\0';
