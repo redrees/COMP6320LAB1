@@ -12,27 +12,31 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <time.h>
 #include <arpa/inet.h>
-//#include <wchar.h>
 #define MAXLINE 1024 /*max text line length*/
-//#define MAXLINE 256 /*max text line length*/
+#define MAXSIZE MAXLINE+16 /*max packet bytes*/
 #define SERV_PORT 10010  /*port*/
 
 int main(int argc, char **argv) // user specifies server ip address in command line
 {
+    uint64_t htonll(uint64_t);
+    uint64_t ntohll(uint64_t);
+
     int sockfd;
 	socklen_t servlen;
     struct sockaddr_in servaddr;
     char sendline[MAXLINE], recvline[MAXLINE];
-    struct packet_lab11
+    uint32_t seq = 1;
+    struct timespec ts;
+    typedef struct packet_lab11
     {
         uint16_t len;
         uint32_t seq;
         uint64_t timestamp;
-        char message[];
-        //wchar_t message[MAXLINE];
+        char message[MAXLINE];
     } Packet;
-    Packet *pkt = mallon(1);
+    Packet pkt_s, pkt_r;
 
     // basic check of the arguments
     // additional checks can be inserted
@@ -52,12 +56,6 @@ int main(int argc, char **argv) // user specifies server ip address in command l
 
     servlen = sizeof(servaddr);
 
-    /*
-    uint16_t
-    uint32_t
-    uint64_t
-    */
-
     // Creation of the socket
     memset(&servaddr, 0, servlen);
     servaddr.sin_family = AF_INET;
@@ -67,24 +65,65 @@ int main(int argc, char **argv) // user specifies server ip address in command l
     printf("Enter a message to send: ");
     while (fgets(sendline, MAXLINE, stdin) != NULL)
     {
-        /*
         // Creation of the packet
-        memset(&pkt, 0, sizeof(pkt));
-        pkt.len = htons(1); // message length
-        pkt.seq = htonl(1); // sequence number
-        */
-        if (sendto(sockfd, sendline, MAXLINE, 0, (struct sockaddr *) &servaddr, servlen) < 0)
+        memset(&pkt_s, 0, MAXSIZE);
+        int messagelen = (int)strlen(sendline)-1;
+        pkt_s.len = htons(messagelen); // message length
+        pkt_s.seq = htonl(seq++); // sequence number
+        strncpy(pkt_s.message, sendline, strlen(sendline));
+        pkt_s.message[messagelen] = '\0';
+
+        clock_gettime(CLOCK_REALTIME, &ts);
+        pkt_s.timestamp = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+        pkt_s.timestamp = htonll(pkt_s.timestamp);
+
+        if (sendto(sockfd, &pkt_s, messagelen + 16, 0, (struct sockaddr *) &servaddr, servlen) < 0)
         {
             perror("Problem in sending to the server");
             exit(3);
         }
-        int numBytes = recvfrom(sockfd, recvline, MAXLINE-1, 0, (struct sockaddr *) &servaddr, &servlen);
 
+        memset(&pkt_r, 0, MAXSIZE);
+        int numBytes = recvfrom(sockfd, &pkt_r, messagelen + 16, 0, (struct sockaddr *) &servaddr, &servlen);
+
+        clock_gettime(CLOCK_REALTIME, &ts);
+        uint64_t timeTaken = (ts.tv_sec * 1000 + ts.tv_nsec / 1000000) - ntohll(pkt_r.timestamp);
+
+        printf("%s%lu\n", "Round trip time taken in milliseconds: ", timeTaken);
         printf("%s", "String received from the server: ");
-        fputs(recvline, stdout);
+        fputs(pkt_r.message, stdout);
+		printf("\n%s%u, %u, %u\n", "pkt len, seq, timestamp: ", ntohs(pkt_r.len), ntohl(pkt_r.seq), (int)pkt_r.timestamp);
 
         printf("Enter a message to send: ");
     }
     
     exit(0);
+}
+
+/*
+    Converts 64-bit int to network byte order using htonl
+*/
+uint64_t htonll(uint64_t value) {
+    if (htonl(1) != 1)
+    {
+        return (((uint64_t)htonl((uint32_t)(value & 0xFFFFFFFFLL))) << 32) | htonl((uint32_t)(value >> 32));
+    }
+    else
+    {
+        return value;
+    }
+}
+
+/*
+    Converts 64-bit int to host byte order using ntohl
+*/
+uint64_t ntohll(uint64_t value) {
+    if (htonl(1) != 1)
+    {
+        return (((uint64_t)ntohl((uint32_t)(value & 0xFFFFFFFFLL))) << 32) | ntohl((uint32_t)(value >> 32));
+    }
+    else
+    {
+        return value;
+    }
 }

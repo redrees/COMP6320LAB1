@@ -13,16 +13,30 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <unistd.h>
-#define MAXLINE 1024 /*max text line length*/
+#define MAXLINE 1024 /*max string bytes*/
+#define MAXSIZE MAXLINE+16 /*max packet bytes*/
 #define SERV_PORT 10010  /*port*/
 
 int main(int argc, char **argv)
 {
-	int sockfd, connfd, n;
+    uint64_t htonll(uint64_t);
+    uint64_t ntohll(uint64_t);
+
+	int sockfd, numBytes, n;
 	pid_t childpid;
 	socklen_t clilen;
 	char buf[MAXLINE];
 	struct sockaddr_in cliaddr, servaddr;
+    uint32_t seq = 1;
+    typedef struct packet_lab11
+    {
+        uint16_t len;
+        uint32_t seq;
+        uint64_t timestamp;
+        char message[MAXLINE+1];
+    } Packet;
+    Packet pkt;
+	memset(&pkt, 0, MAXSIZE+1);
 
 	//Create a socket for the soclet
 	//If sockfd<0 there was an error in the creation of the socket
@@ -45,22 +59,52 @@ int main(int argc, char **argv)
 	for( ; ; )
 	{
 		clilen = sizeof(cliaddr);
-		//accept a connection
-		connfd = recvfrom(sockfd, buf, MAXLINE-1, 0, (struct sockaddr *) &cliaddr, &clilen); //blocked, wait for connection
+		//receive data from client
+		numBytes = recvfrom(sockfd, &pkt, MAXSIZE, 0, (struct sockaddr *) &cliaddr, &clilen); //blocked, wait for connection
 
-        if (connfd < 0)
+        if (numBytes < 0)
         {
             perror("recvfrom error");
             exit(3);
         }
+		sleep(3);
+
+        //just in case client didn't send a null byte
+		pkt.message[numBytes-(MAXSIZE-MAXLINE)] = '\0';
 
 		printf("%s\n", "String received from and resent to the client:");
-        puts(buf);
-        sendto(sockfd, buf, MAXLINE, 0, (struct sockaddr *) &cliaddr, clilen);
+        puts(pkt.message);
+		fflush(stdout);
+        sendto(sockfd, &pkt, MAXSIZE, 0, (struct sockaddr *) &cliaddr, clilen);
 	}
 
-	//close socket of the server
-	close(connfd);
-
 	return 0;
+}
+
+/*
+    Converts 64-bit int to network byte order using htonl
+*/
+uint64_t htonll(uint64_t value) {
+    if (htonl(1) != 1)
+    {
+        return (((uint64_t)htonl((uint32_t)(value & 0xFFFFFFFFLL))) << 32) | htonl((uint32_t)(value >> 32));
+    }
+    else
+    {
+        return value;
+    }
+}
+
+/*
+    Converts 64-bit int to host byte order using ntohl
+*/
+uint64_t ntohll(uint64_t value) {
+    if (htonl(1) != 1)
+    {
+        return (((uint64_t)ntohl((uint32_t)(value & 0xFFFFFFFFLL))) << 32) | ntohl((uint32_t)(value >> 32));
+    }
+    else
+    {
+        return value;
+    }
 }
