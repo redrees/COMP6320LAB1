@@ -15,7 +15,7 @@
 #include <time.h>
 #include <arpa/inet.h>
 #define MAXLINE 1024 /*max text line length*/
-#define MAXSIZE MAXLINE+16 /*max packet bytes*/
+#define MAXSIZE MAXLINE+14 /*max packet bytes*/
 #define SERV_PORT 10010  /*port*/
 
 int main(int argc, char **argv) // user specifies server ip address in command line
@@ -32,7 +32,7 @@ int main(int argc, char **argv) // user specifies server ip address in command l
     struct timespec timeout;
     timeout.tv_sec = 10;
     timeout.tv_nsec = 0;
-    typedef struct packet_lab11
+    typedef struct __attribute__((__packed__)) packet_lab11
     {
         uint16_t len;
         uint32_t seq;
@@ -106,7 +106,7 @@ int main(int argc, char **argv) // user specifies server ip address in command l
         printf("%s", "String received from the server: ");
         fputs(pkt_r.message, stdout);
 
-        printf("Enter a message to send: ");
+        printf("\nEnter a message to send: ");
     }
     
     exit(0);

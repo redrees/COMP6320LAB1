@@ -16,9 +16,9 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #define MAXLINE 1024 /*max text line length*/
-#define MAXSIZE MAXLINE+16 /*max packet bytes*/
+#define MAXSIZE MAXLINE+14 /*max packet bytes*/
 #define SERV_PORT 10010  /*port*/
-#define NUMPACKETS 100 /*number of packets to send/receive*/
+#define NUMPACKETS 10000 /*number of packets to send/receive*/
 
 int main(int argc, char **argv) // user specifies server ip address in command line
 {
@@ -33,7 +33,7 @@ int main(int argc, char **argv) // user specifies server ip address in command l
     struct timespec timeout;
     timeout.tv_sec = 10;
     timeout.tv_nsec = 0;
-    typedef struct packet_lab11
+    typedef struct __attribute__((__packed__)) packet_lab11
     {
         uint16_t len;
         uint32_t seq;
@@ -106,6 +106,7 @@ int main(int argc, char **argv) // user specifies server ip address in command l
         int numBytes = 0;
         Packet pkt_r;
         int returnedMessages[NUMPACKETS] = { 0 };
+
         while (i++ < NUMPACKETS && numBytes >= 0)
         {
             memset(&pkt_r, 0, MAXSIZE);
@@ -117,10 +118,10 @@ int main(int argc, char **argv) // user specifies server ip address in command l
             else
             {
                 returnedMessages[atoi(pkt_r.message)-1] = 1;
-                printf("%s\n", pkt_r.message);
             }
         }
 
+        // report missing echos from the server
         i = 0;
         while (i < NUMPACKETS)
         {
