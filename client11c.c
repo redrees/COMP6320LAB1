@@ -14,9 +14,11 @@
 #include <string.h>
 #include <time.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 #define MAXLINE 1024 /*max text line length*/
 #define MAXSIZE MAXLINE+16 /*max packet bytes*/
 #define SERV_PORT 10010  /*port*/
+#define NUMPACKETS 100 /*number of packets to send/receive*/
 
 int main(int argc, char **argv) // user specifies server ip address in command line
 {
@@ -26,7 +28,6 @@ int main(int argc, char **argv) // user specifies server ip address in command l
     int sockfd;
 	socklen_t servlen;
     struct sockaddr_in servaddr;
-    char sendline[MAXLINE], recvline[MAXLINE];
     uint32_t seq = 1;
     struct timespec ts;
     struct timespec timeout;
@@ -39,13 +40,13 @@ int main(int argc, char **argv) // user specifies server ip address in command l
         uint64_t timestamp;
         char message[MAXLINE];
     } Packet;
-    Packet pkt_s, pkt_r;
+    pid_t childpid;
 
     // basic check of the arguments
     // additional checks can be inserted
     if (argc != 2)
     {
-        perror("Usage: client11b <IP address of the server>");
+        perror("Usage: client11c <IP address of the server>");
         exit(1);
     }
 
@@ -70,45 +71,66 @@ int main(int argc, char **argv) // user specifies server ip address in command l
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = inet_addr(argv[1]); // convert number_dot string to binary
     servaddr.sin_port = htons(SERV_PORT); // convert to big-endian order
-    
-    printf("Enter a message to send: ");
-    while (fgets(sendline, MAXLINE, stdin) != NULL)
+
+    childpid = fork();
+    if (childpid == 0) // child process
     {
-        // Creation of the packet
-        memset(&pkt_s, 0, MAXSIZE);
-        int messagelen = (int)strlen(sendline)-1;
-        pkt_s.len = htons(messagelen); // message length
-        pkt_s.seq = htonl(seq++); // sequence number
-        strncpy(pkt_s.message, sendline, strlen(sendline));
-        pkt_s.message[messagelen] = '\0';
-
-        clock_gettime(CLOCK_REALTIME, &ts);
-        pkt_s.timestamp = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-        pkt_s.timestamp = htonll(pkt_s.timestamp);
-
-        if (sendto(sockfd, &pkt_s, messagelen + 16, 0, (struct sockaddr *) &servaddr, servlen) < 0)
+        // send here
+        int i = 0;
+        Packet pkt_s;
+        while (i++ < NUMPACKETS)
         {
-            perror("Problem in sending to the server");
-            exit(4);
+            // Creation of the packet
+            memset(&(pkt_s), 0, MAXSIZE);
+            sprintf(pkt_s.message, "%d", i);
+            int messagelen = (int)strlen(pkt_s.message);
+            pkt_s.len = htons(messagelen); // message length
+            pkt_s.seq = htonl(seq++); // sequence number
+
+            clock_gettime(CLOCK_REALTIME, &ts);
+            pkt_s.timestamp = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+            pkt_s.timestamp = htonll(pkt_s.timestamp);
+
+            if (sendto(sockfd, &pkt_s, messagelen + 16, 0, (struct sockaddr *) &servaddr, servlen) < 0)
+            {
+                perror("Problem in sending to the server");
+                exit(4);
+            }
         }
-
-        memset(&pkt_r, 0, MAXSIZE);
-        int numBytes = recvfrom(sockfd, &pkt_r, messagelen + 16, 0, (struct sockaddr *) &servaddr, &servlen);
-        if(numBytes < 0)
-        {
-            printf("server timedout?\n");
-        }
-
-        clock_gettime(CLOCK_REALTIME, &ts);
-        uint64_t timeTaken = (ts.tv_sec * 1000 + ts.tv_nsec / 1000000) - ntohll(pkt_r.timestamp);
-
-        printf("%s%lu\n", "Round trip time taken in milliseconds: ", timeTaken);
-        printf("%s", "String received from the server: ");
-        fputs(pkt_r.message, stdout);
-
-        printf("Enter a message to send: ");
     }
-    
+    else // parent process
+    {
+        // receive here
+        int i = 0;
+        int j;
+        int numBytes = 0;
+        Packet pkt_r;
+        int returnedMessages[NUMPACKETS] = { 0 };
+        while (i++ < NUMPACKETS && numBytes >= 0)
+        {
+            memset(&pkt_r, 0, MAXSIZE);
+            numBytes = recvfrom(sockfd, &pkt_r, MAXSIZE, 0, (struct sockaddr *) &servaddr, &servlen);
+            if(numBytes < 0)
+            {
+                printf("server timedout?\n");
+            }
+            else
+            {
+                returnedMessages[atoi(pkt_r.message)-1] = 1;
+                printf("%s\n", pkt_r.message);
+            }
+        }
+
+        i = 0;
+        while (i < NUMPACKETS)
+        {
+            if (returnedMessages[i++] == 0)
+            {
+                printf("%s%d\n", "Missing echo: ", i);
+            }
+        }
+    }
+
     exit(0);
 }
 

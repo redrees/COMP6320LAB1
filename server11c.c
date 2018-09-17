@@ -71,10 +71,17 @@ int main(int argc, char **argv)
         //just in case client didn't send a null byte
 		pkt.message[numBytes-(MAXSIZE-MAXLINE)] = '\0';
 
+        if(ntohl(pkt.seq)%23 != 0){
+
 		printf("%s\n", "String received from and resent to the client:");
         puts(pkt.message);
 		fflush(stdout);
-        sendto(sockfd, &pkt, MAXSIZE, 0, (struct sockaddr *) &cliaddr, clilen);
+        if(sendto(sockfd, &pkt, MAXSIZE, 0, (struct sockaddr *) &cliaddr, clilen) < 0)
+        {
+            perror("something is wrong...");
+            exit(4);
+
+        } }
 	}
 
 	return 0;
