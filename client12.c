@@ -80,6 +80,9 @@ int main(int argc, char **argv) // user specifies server ip address in command l
 
     printf("%s%c %d %d\n", "request: ", req.op, req.a, req.b);
 
+    req.a = htonl(req.a);
+    req.b = htonl(req.b);
+
     send(sockfd, &req, sizeof(req), 0); // send request to server
     
     memset(&response, 0, sizeof(response));
@@ -92,7 +95,7 @@ int main(int argc, char **argv) // user specifies server ip address in command l
 
     if (response.v == 1)
     {
-        printf("%s %d\n", "Answer received from the server: ", response.r);
+        printf("%s %d\n", "Answer received from the server: ", ntohl(response.r));
     }
     else
     {

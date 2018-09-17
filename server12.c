@@ -80,12 +80,16 @@ int main(int argc, char **argv)
 
 			if((n = recv(connfd, &req, sizeof(req), 0)) >= 0)
 			{
-				printf("%s %c %u %u\n", "Request from a client:", req.op, req.a, req.b);
                 memset(&response, 0, sizeof(response));
 
                 response.op = req.op;
                 response.a = req.a;
                 response.b = req.b;
+
+				req.a = ntohl(req.a);
+				req.b = ntohl(req.b);
+				
+				printf("%s %c %u %u\n", "Request from a client:", req.op, req.a, req.b);
 
                 if(req.op == '+')
                 {
@@ -112,6 +116,8 @@ int main(int argc, char **argv)
                     response.r = 0;
                     response.v = 2;
                 }
+
+				response.r = htonl(response.r);
 				send(connfd, &response, sizeof(response), 0);
 			}
 
