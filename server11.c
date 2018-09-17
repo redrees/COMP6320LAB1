@@ -14,7 +14,7 @@
 #include <string.h>
 #include <unistd.h>
 #define MAXLINE 1024 /*max string bytes*/
-#define MAXSIZE MAXLINE+16 /*max packet bytes*/
+#define MAXSIZE MAXLINE+14 /*max packet bytes*/
 #define SERV_PORT 10010  /*port*/
 
 int main(int argc, char **argv)
@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 	char buf[MAXLINE];
 	struct sockaddr_in cliaddr, servaddr;
     uint32_t seq = 1;
-    typedef struct packet_lab11
+    typedef struct __attribute__((__packed__)) packet_lab11
     {
         uint16_t len;
         uint32_t seq;
