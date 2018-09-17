@@ -10,7 +10,7 @@
    - [x] Add a child process to handle recvfrom()
    - [x] Tested on TUX machine, client11c is working as intended.
 3. Part 2
-   - [ ] Modify echo sample to use data packed according to Lab12-RFC
-   - [ ] Server needs to perform requested operation and reply accordingly
+   - [x] Modify echo sample to use data packed according to Lab12-RFC
+   - [x] Server needs to perform requested operation and reply accordingly
 4. Report
    - [ ] Write report
