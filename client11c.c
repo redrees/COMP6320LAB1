@@ -99,7 +99,7 @@ int main(int argc, char **argv) // user specifies server ip address in command l
         }
     }
     else // parent process
-    {
+    {				//I think we forget to calculate the smallest, largest, and average round trip times in lab11b. 
         // receive here
         int i = 0;
         int j;
