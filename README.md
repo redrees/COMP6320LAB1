@@ -6,7 +6,7 @@
    - [x] Calculate time in milliseconds / convert to network byte order (htonl is too small to handle 64-bit int)
    - [x] Figure out how to pack data into Lab11-RFC format
    - [x] Is the server supposed to resend the packet exactly as it received it or with new sequence number & timestamp?
-   - [ ] clean out code (take out fflush from server)
+   - [x] clean out code (take out fflush from server)
 2. Part 1.c
    - [x] Add a child process to handle recvfrom()
    - [x] Tested on TUX machine, client11c is working as intended.
