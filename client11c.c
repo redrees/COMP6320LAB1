@@ -27,6 +27,10 @@ int main(int argc, char **argv) // user specifies server ip address in command l
 
     int sockfd;
 	socklen_t servlen;
+	minstime=99999;
+	maxstime=0;
+	totaltime;
+    int messagersvd=0;
     struct sockaddr_in servaddr;
     uint32_t seq = 1;
     struct timespec ts;
@@ -118,6 +122,15 @@ int main(int argc, char **argv) // user specifies server ip address in command l
             else
             {
                 returnedMessages[atoi(pkt_r.message)-1] = 1;
+		    if(pkt_r.timestamp<minstime)
+		    {
+			minstime=pkt_r.timestamp;
+		    }
+		    if(pkt_r.timestamp<maxstime)
+		    {
+			maxstime=pkt_r.timestamp;
+		    }
+		    totaltime=pkt_r.timestamp+totaltime;
             }
         }
 
@@ -128,8 +141,13 @@ int main(int argc, char **argv) // user specifies server ip address in command l
             if (returnedMessages[i++] == 0)
             {
                 printf("%s%d\n", "Missing echo: ", i);
+		messagersvd++;
             }
         }
+	printf("%s%d\n", "Missing echo totally: ", 10000-messagersvd);
+	printf("%s%d\n", "Smallest round trip time: ", minstime);
+	printf("%s%d\n", "Largest round trip time: ", maxstime);
+	printf("%s%d\n", "average round trip time: ", totaltime);
     }
 
     exit(0);
