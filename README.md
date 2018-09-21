@@ -14,5 +14,6 @@
 3. Part 2
    - [x] Modify echo sample to use data packed according to Lab12-RFC
    - [x] Server needs to perform requested operation and reply accordingly
+   - [ ] client12.c -> fix line 75: checks multiplication operator twice instead of subtraction
 4. Report
    - [ ] Write report
