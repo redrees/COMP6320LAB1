@@ -122,15 +122,16 @@ int main(int argc, char **argv) // user specifies server ip address in command l
             else
             {
                 returnedMessages[atoi(pkt_r.message)-1] = 1;
-// 		    if(atoi(pkt_r.timestamp)<minstime)
-// 		    {
-// 			minstime=atoi(pkt_r.timestamp);
-// 		    }
-// 		    if(atoi(pkt_r.timestamp)>maxstime)
-// 		    {
-// 			maxstime=atoi(pkt_r.timestamp);
-// 		    }
-// 		    totaltime=atoi(pkt_r.timestamp)+totaltime;
+		    uint64_t timeTaken = (ts.tv_sec * 1000 + ts.tv_nsec / 1000000) - ntohll(pkt_r.timestamp);
+		    if(timeTaken<minstime)
+		    {
+			minstime=timeTaken);
+		    }
+		    if(timeTaken>maxstime)
+		    {
+			maxstime=timeTaken);
+		    }
+		    totaltime=timeTaken+totaltime;
             }
         }
 
@@ -145,9 +146,9 @@ int main(int argc, char **argv) // user specifies server ip address in command l
             }
         }
 	printf("%s%d\n", "Missing echo totally: ", messagemissed);
-// 	printf("%s%d\n", "Smallest round trip time: ", minstime);
-// 	printf("%s%d\n", "Largest round trip time: ", maxstime);
-// 	printf("%s%d\n", "average round trip time: ", totaltime/(10000-messagemissed));
+	printf("%s%d\n", "Smallest round trip time: ", minstime);
+	printf("%s%d\n", "Largest round trip time: ", maxstime);
+	printf("%s%d\n", "average round trip time: ", totaltime/(10000-messagemissed));
     }
 
     exit(0);
