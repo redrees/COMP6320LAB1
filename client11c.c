@@ -30,7 +30,7 @@ int main(int argc, char **argv) // user specifies server ip address in command l
 	uint64_t minstime=99999;
 	uint64_t maxstime=0;
 	uint64_t totaltime=0;
-    	int messagemissed=0;
+	int messagemissed=0;
     struct sockaddr_in servaddr;
     uint32_t seq = 1;
     struct timespec ts;
@@ -122,15 +122,15 @@ int main(int argc, char **argv) // user specifies server ip address in command l
             else
             {
                 returnedMessages[atoi(pkt_r.message)-1] = 1;
-		    if(atoi(pkt_r.timestamp)<minstime)
-		    {
-			minstime=atoi(pkt_r.timestamp);
-		    }
-		    if(atoi(pkt_r.timestamp)>maxstime)
-		    {
-			maxstime=atoi(pkt_r.timestamp);
-		    }
-		    totaltime=atoi(pkt_r.timestamp)+totaltime;
+// 		    if(atoi(pkt_r.timestamp)<minstime)
+// 		    {
+// 			minstime=atoi(pkt_r.timestamp);
+// 		    }
+// 		    if(atoi(pkt_r.timestamp)>maxstime)
+// 		    {
+// 			maxstime=atoi(pkt_r.timestamp);
+// 		    }
+// 		    totaltime=atoi(pkt_r.timestamp)+totaltime;
             }
         }
 
@@ -141,13 +141,13 @@ int main(int argc, char **argv) // user specifies server ip address in command l
             if (returnedMessages[i++] == 0)
             {
                 printf("%s%d\n", "Missing echo: ", i);
-		messagemissed++;
+// 		messagemissed++;
             }
         }
-	printf("%s%d\n", "Missing echo totally: ", messagemissed);
-	printf("%s%d\n", "Smallest round trip time: ", minstime);
-	printf("%s%d\n", "Largest round trip time: ", maxstime);
-	printf("%s%d\n", "average round trip time: ", totaltime/(10000-messagemissed));
+// 	printf("%s%d\n", "Missing echo totally: ", messagemissed);
+// 	printf("%s%d\n", "Smallest round trip time: ", minstime);
+// 	printf("%s%d\n", "Largest round trip time: ", maxstime);
+// 	printf("%s%d\n", "average round trip time: ", totaltime/(10000-messagemissed));
     }
 
     exit(0);
