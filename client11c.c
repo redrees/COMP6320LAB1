@@ -122,15 +122,15 @@ int main(int argc, char **argv) // user specifies server ip address in command l
             else
             {
                 returnedMessages[atoi(pkt_r.message)-1] = 1;
-		    if(pkt_r.timestamp<minstime)
+		    if(atoi(pkt_r.timestamp)<minstime)
 		    {
-			minstime=pkt_r.timestamp;
+			minstime=atoi(pkt_r.timestamp);
 		    }
-		    if(pkt_r.timestamp>maxstime)
+		    if(atoi(pkt_r.timestamp)>maxstime)
 		    {
-			maxstime=pkt_r.timestamp;
+			maxstime=atoi(pkt_r.timestamp);
 		    }
-		    totaltime=pkt_r.timestamp+totaltime;
+		    totaltime=atoi(pkt_r.timestamp)+totaltime;
             }
         }
 
