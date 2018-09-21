@@ -120,8 +120,9 @@ int main(int argc, char **argv) // user specifies server ip address in command l
                 printf("server timedout?\n");
             }
             else
-            {
-                returnedMessages[atoi(pkt_r.message)-1] = 1;
+            {	
+		    clock_gettime(CLOCK_REALTIME, &ts);
+		    returnedMessages[atoi(pkt_r.message)-1] = 1;
 		    uint64_t timeTaken = (ts.tv_sec * 1000 + ts.tv_nsec / 1000000) - ntohll(pkt_r.timestamp);
 		    if(timeTaken<minstime)
 		    {
