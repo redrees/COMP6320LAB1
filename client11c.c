@@ -141,10 +141,10 @@ int main(int argc, char **argv) // user specifies server ip address in command l
             if (returnedMessages[i++] == 0)
             {
                 printf("%s%d\n", "Missing echo: ", i);
-// 		messagemissed++;
+		messagemissed++;
             }
         }
-// 	printf("%s%d\n", "Missing echo totally: ", messagemissed);
+	printf("%s%d\n", "Missing echo totally: ", messagemissed);
 // 	printf("%s%d\n", "Smallest round trip time: ", minstime);
 // 	printf("%s%d\n", "Largest round trip time: ", maxstime);
 // 	printf("%s%d\n", "average round trip time: ", totaltime/(10000-messagemissed));
