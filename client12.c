@@ -72,7 +72,7 @@ int main(int argc, char **argv) // user specifies server ip address in command l
     req.a = atoi(argv[3]);
     req.b = atoi(argv[4]);
 
-    if(req.op != '+' && req.op != '*' && req.op != '*' && req.op != '/')
+    if(req.op != '+' && req.op != '-' && req.op != '*' && req.op != '/')
     {
         perror("Invalid op code: must be one of +, -, *, /");
         exit(4);
