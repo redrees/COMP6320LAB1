@@ -27,6 +27,10 @@ int main(int argc, char **argv) // user specifies server ip address in command l
 
     int sockfd;
 	socklen_t servlen;
+	int minstime=99999;
+	int maxstime=0;
+	int totaltime=0;
+    	int messagersvd=0;
     struct sockaddr_in servaddr;
     uint32_t seq = 1;
     struct timespec ts;
@@ -103,12 +107,7 @@ int main(int argc, char **argv) // user specifies server ip address in command l
         // receive here
         int i = 0;
         int j;
-        int numBytes = 0;
-	int     
-		minstime=99999;
-		maxstime=0;
-		totaltime=0;
-    		messagersvd=0;
+        int numBytes = 0;	
         Packet pkt_r;
         int returnedMessages[NUMPACKETS] = { 0 };
 
