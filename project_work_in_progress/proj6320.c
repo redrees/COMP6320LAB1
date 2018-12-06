@@ -302,6 +302,55 @@ void acceptPacket(queue* q, packet* p)
 	p->wait_t = wait_t;
 }
 
+// calculate theoretical performance of random select two queues with same service rate
+stats* theoretical(double lambda, double mu, int k)
+{
+    double adjLambda = lambda/2;
+	stats *s = (stats *)malloc(sizeof(stats));
+
+    if (adjLambda > mu)
+    {
+        s->avg_queue_length = k-1;
+        s->blocked_rate = 1.0;
+        s->avg_wait_t = (k-1)/mu;
+
+        return s;
+    }
+
+    double rho = adjLambda / mu;
+    double pi0 = 1.0, pi10 = 0.0;
+    double B, L, Lq, W, br;
+    int i = 0;
+
+    while (i < k)
+    {
+        pi0 += pow(rho, i+1);
+        i++;
+    }
+
+    pi0 = 1/pi0;
+    B = 1 - pi0;
+    pi10 = pow(rho, k) * pi0;
+
+    i = 0;
+    L = 0.0;
+    while (i < k)
+    {
+        L += (i+1)*pow(rho, i+1)*pi0;
+        i++;
+    }
+
+    Lq = L - B;         // Avg queue length
+    W = Lq / adjLambda; // Avg wait time
+    br = pi10;      // Blocking rate
+
+	s->avg_queue_length = Lq;
+	s->blocked_rate = br;
+	s->avg_wait_t = W;
+
+    return s;
+}
+
 //==============================================================================
 //=  Function to generate exponentially distributed RVs using inverse method   =
 //=    - Input:  x (mean value of distribution)                                =
