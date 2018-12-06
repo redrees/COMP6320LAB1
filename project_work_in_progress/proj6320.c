@@ -22,7 +22,7 @@ typedef enum event_type
 typedef enum queue_selection
 {
 	UNIFORMLY_RANDOM,
-	MIN_LENGHT_QUEUE
+	MIN_LENGTH_QUEUE
 } queue_selection;
 
 typedef struct packet
@@ -48,17 +48,38 @@ typedef struct stats
 
 double expntl(double);        // Generate exponential RV with mean x
 stats* simulateQ(double, double, queue_selection);
+stats* theoretical(double, double, int);
 void acceptPacket(queue*, packet*);
 
 int main()
 {
-	double lambda = 3.9;
-	double mu = 2.0;
-	char a;
+	double lambda = 5.0;
+	double mu = 4.0;
+	int k = 10, i = 0;
+    double avg_queue_length = 0.0, avg_wait_t = 0.0, blocked_rate = 0.0;
 	srand(time(0)); // time dependent random seed: comment out for fixed seed
 
-	stats *s = simulateQ(lambda, mu, UNIFORMLY_RANDOM);
-    if (s != NULL) printf("stats avg q leng = %f, avg wait time = %f, block rate = %f\n", s->avg_queue_length, s->avg_wait_t, s->blocked_rate);
+	stats *s;
+    while (i < k)
+    {
+        srand((long)(time(0)*pow(.7,i)));
+        s = simulateQ(lambda, mu, UNIFORMLY_RANDOM);
+        avg_queue_length += s->avg_queue_length;
+        avg_wait_t += s-> avg_wait_t;
+        blocked_rate += s-> blocked_rate;
+
+        free(s);
+        i++;
+    }
+
+    avg_queue_length /= k;
+    avg_wait_t /= k;
+    blocked_rate /= k;
+
+    printf("stats avg q leng = %f, avg wait time = %f, block rate = %f\n", avg_queue_length, avg_wait_t, blocked_rate);
+
+    stats *s2 = theoretical(lambda, mu, 10);
+    printf("theoretical stats avg q leng = %f, avg wait time = %f, block rate = %f\n", s2->avg_queue_length, s2->avg_wait_t, s2->blocked_rate);
     /**
      *  Theoritical performance when lambda = 3.9 / 2, mu = 2.0 (uniformly random queueing)
      *  pi0 = 0.1028 (idle rate)
@@ -97,6 +118,7 @@ stats* simulateQ(double lambda, double mu, queue_selection selection_strategy)
     int blocked = 0;
     int total_length = 0;
     double total_wait_t = 0.0;
+    int accepted = 0;
 
 	// Set up two queues
 	queue *q1 = (queue *)malloc(sizeof(queue));
@@ -123,7 +145,6 @@ stats* simulateQ(double lambda, double mu, queue_selection selection_strategy)
     int infloop = 0;
 
 	// Loop while there are packets remaining to either arrive or depart
-	//while (i < MAX_PACKETS || q1->length > 0 || q2->length > 0)
     while (next_event != DONE)
 	{
         infloop++;
@@ -147,59 +168,56 @@ stats* simulateQ(double lambda, double mu, queue_selection selection_strategy)
 				q2->front_serv_t -= time_elapsed;
 			}
 
-            // See if new packet can be accepted
-            if (q1->length == 10 && q2->length == 10)
-            {
-                blocked++;
-            }
-            else
-            {
-                // set up a packet
-                packet *newPacket = (packet *)malloc(sizeof(packet));
-                newPacket->next = NULL;
-                newPacket->serv_t = expntl(serv_t_mean);
-                newPacket->wait_t = 0.0;
+            // set up a packet
+            packet *newPacket = (packet *)malloc(sizeof(packet));
+            newPacket->next = NULL;
+            newPacket->serv_t = expntl(serv_t_mean);
+            newPacket->wait_t = 0.0;
 
-                if (selection_strategy == MIN_LENGHT_QUEUE && q1->length != q2->length)
+            if (selection_strategy == MIN_LENGTH_QUEUE && q1->length != q2->length)
+            {
+                if (q1->length >= 10 && q2->length >= 10) printf("min length q insertion when full capacity!\n");
+                if (q1->length < q2->length)
                 {
-                    if (q1->length < q2->length)
-                    {
-                        total_length += max(0, q1->length - 1); // exclude serviced packet
-                        acceptPacket(q1, newPacket);
-                    }
-                    else
-                    {
-                        total_length += max(0, q2->length - 1); // exclude serviced packet
-                        acceptPacket(q2, newPacket);
-                    }
+                    total_length += max(0, q1->length - 1); // exclude servicing packet
+                    acceptPacket(q1, newPacket);
+                    accepted++;
                 }
-                else // (selection_strategy == UNIFORMLY_RANDOM) or two queues have same length
+                else
                 {
-                    if ((rand() % 2) == 0)
+                    total_length += max(0, q2->length - 1); // exclude servicing packet
+                    acceptPacket(q2, newPacket);
+                    accepted++;
+                }
+            }
+            else // (selection_strategy == UNIFORMLY_RANDOM) or two queues have same length
+            {
+                if ((rand() % 2) == 0)
+                {
+                    if (q1->length < 10)
                     {
-                        if (q1->length < 10)
-                        {
-                            total_length += max(0, q1->length - 1); // exclude serviced packet
-                            acceptPacket(q1, newPacket);
-                        } 
-                        else 
-                        {
-                            blocked++;
-                            free(newPacket);
-                        }
+                        total_length += max(0, q1->length - 1); // exclude servicing packet
+                        acceptPacket(q1, newPacket);
+                        accepted++;
                     } 
+                    else 
+                    {
+                        blocked++;
+                        free(newPacket);
+                    }
+                } 
+                else
+                {
+                    if (q2->length < 10)
+                    {
+                        total_length += max(0, q2->length - 1); // exclude servicing packet
+                        acceptPacket(q2, newPacket);
+                        accepted++;
+                    }
                     else
                     {
-                        if (q2->length < 10)
-                        {
-                            total_length += max(0, q2->length - 1); // exclude serviced packet
-                            acceptPacket(q2, newPacket);
-                        }
-                        else
-                        {
-                            blocked++;
-                            free(newPacket);
-                        }
+                        blocked++;
+                        free(newPacket);
                     }
                 }
             }
@@ -274,6 +292,7 @@ stats* simulateQ(double lambda, double mu, queue_selection selection_strategy)
 	s->blocked_rate = (1.0*blocked) / MAX_PACKETS;
 	s->avg_wait_t = total_wait_t / (MAX_PACKETS - blocked);
     //printf("loop counter: %i, total blocked: %d, total length: %d, total wait: %f\n", infloop, blocked, total_length, total_wait_t);
+    //printf("  accepted: %d\n", accepted);
 
     return s;
 }
@@ -358,9 +377,9 @@ stats* theoretical(double lambda, double mu, int k)
 //==============================================================================
 double expntl(double x)
 {
-	double z;                     // Uniform random number from 0 to 1
+	double z; // Uniform random number from 0 to 1
 
-								  // Pull a uniform RV (0 < z < 1)
+	// Pull a uniform RV (0 < z < 1)
 	do
 	{
 		z = ((double)rand() / RAND_MAX);
